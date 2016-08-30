@@ -1,23 +1,28 @@
 var express = require('express');
 var async = require('async');
+var querystring = require('querystring');
 var userDAO = require('../model/UserDAO');
 var router = express.Router();
 
 
 router.get('/',  function(req, res, next) {
-	async.waterfall([function(callback){
-		userDAO.findUserList(callback);
-	}] , function(err , result){
-		if(err){
-			consoel.log(err);
-			res.send('내부서버오류');
-		} else{
-			res.send(result);
+	var target;
+	if(req.url.length > 1){
+		var qObj = querystring.parse(req.url.substring(2));
+		if(qObj.order == undefined){
+			target = 0;
+		} else {
+			target = qObj.order;
 		}
-		
+	} else{
+		target = 0;
+	}
+	async.waterfall([function(callback){
+		userDAO.findUserTempList(target , callback);
+	}] , function(err , result){
+		res.render('member_all' , {result : result , order : target});
 	});
 });
-
 
 
 module.exports = router;

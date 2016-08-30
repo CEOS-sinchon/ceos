@@ -15,11 +15,12 @@ var passport = require('./helper/passport.js').passport;
 var session = new Session({
 	//store: sessionStore,
 	cookie:{
-		maxAge: 1000 * 60 * 60
+		maxAge: 1000 * 60 * 60,
+		 secure: false 
 	},
 	key : config.sessionKey,
-	resave : true,
-    saveUninitialized : true,
+	resave : false,
+    saveUninitialized : false,
     secret: config.secretKey
 });
 

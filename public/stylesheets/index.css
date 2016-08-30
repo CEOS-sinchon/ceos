@@ -124,6 +124,9 @@
 	width:205px;
 	float:left;
 }
+.members .left_col{
+    width:145px;
+}
 
 .left_menu{
 	    width: 100%;
@@ -171,15 +174,27 @@
     line-height:30px;
 }
 
+.members .left_kor{
+    width:45px;
+}
+
 .right_col{
 	width:695px;
 	float:left;
+}
+
+.members .right_col{
+    width:755px;
 }
 
 .right_top{
 	    width: 600px;
     margin: 0 auto;
     height: 60px;
+}
+
+.members .right_top{
+    width:755px;
 }
 
 .right_top_name{
@@ -208,10 +223,18 @@
     padding: 15px 60px;
 }
 
+.members .right_top_info{
+    width:257.5px;
+}
+
 
 .right_bot{
         width: 600px;
     margin: 50px auto;
+}
+
+.members .right_bot{
+    width:755px;
 }
 a{
     text-decoration:none;

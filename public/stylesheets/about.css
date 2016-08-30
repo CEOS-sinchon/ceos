@@ -5,11 +5,19 @@
     margin-bottom:50px;
 }
 
+.members .per_card{
+    width:220px;
+}
+
 .per_card.per_left{
 	margin-right:30px;
 }
 .per_card.per_right{
 	margin-left:30px;
+}
+
+.members .per_card.per_right{
+    margin-left:47.5px;
 }
 
 .per_type{
@@ -19,10 +27,21 @@
     margin-bottom: 10px;
 }
 
+.members .per_type{
+    height:inherit;
+    border-bottom:none;
+    position:relative;
+    margin-bottom:0;
+}
+
 .per_type_kor{
 	    float: left;
     font-size: 35px;
     font-weight: 500;
+}
+
+.members .per_type_kor{
+    font-size:28px;
 }
 
 .per_type_eng{
@@ -36,9 +55,10 @@
     float: left;
     font-size: 16px;
     margin: 11px;
-     font-family: BebasKai;
-    
+    font-family: BebasKai;
 }
+
+
 
 .per_type_eng_short{
         float: left;
@@ -48,6 +68,17 @@
      font-family: BebasKai;
 }
 
+.members .members_type{
+        float: right;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    margin: 5px 0;
+    color: #266dc3;
+    font-size: 16px;
+    font-weight: lighter;
+}
+
 .per_img_box{
 	position:relative;
 }
@@ -55,6 +86,10 @@
 .per_img{
 	    width: 100%;
     height: 300px;
+}
+
+.members .per_img{
+    height:220px;
 }
 
 .per_img img{
@@ -68,6 +103,10 @@
     border-left: 270px solid #266dc3;
         bottom: 0;
     position: absolute;
+}
+
+.members .per_tri_box{
+    border-left: 220px solid #266dc3;
 }
 
 .per_card_data{
@@ -115,6 +154,20 @@
 	    width: 200px;
     margin: 0 auto;
     padding: 25px 0;
+}
+
+.members .per_card_office_line{
+    padding:0;
+}
+
+.per_card_onetalk_line{
+        color: white;
+    font-size: 11px;
+    font-weight: 300;
+    width: 155px;
+    /* margin: 0 auto; */
+    padding: 15px 0px;
+    margin-left: 10px;
 }
 
 .per_card_office_name{

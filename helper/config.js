@@ -1,5 +1,5 @@
 /*exports.mysql = {
-      host : 'localhost',
+      host : '10.0.0.1',
       user : 'mkko91',
       database : 'mkko91',
       password : 'ceos13571!!',
@@ -31,3 +31,5 @@ exports.emailConfig = {
 								pass : '7557523m'
 							}
 						};
+
+exports.clubMan = 1; //회장 유저아이디 적으면됨

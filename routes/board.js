@@ -1,10 +1,13 @@
 var express = require('express');
 var router = express.Router();
+var clubMan = require('../helper/config').clubMan; 
 var async = require('async');
 var boardDAO = require('../model/BoardFreeDAO');
 var userDAO = require('../model/UserDAO');
 var qnaDAO = require('../model/QnaDAO');
 var anonyDAO = require('../model/AnonyDAO');
+var noticeDAO = require('../model/NoticeDAO');
+var querystring = require('querystring');
 
 //나중에 body에 파라미터 있는지 없는지 확인하는거 달아놓을것 
 
@@ -60,15 +63,24 @@ router.get('/qna/myboard' , function(req ,res){
 
 
 router.get('/anony', function(req, res ){
+	
 	var pageNum;					//보드 페이지번호 파라미터로 넘겨줘야함 없을시 첫번째 페이지 보이게 무조건 해놓음 파라미터 이름은 pageNum
 	var totalNum;
 	var countPage = 5;
 	var boardInfo;
-	if(req.body.pageNum==undefined){
-		pageNum = 1;
+	var target;
+	if(req.url.length > 6){
+		var qObj = querystring.parse(req.url.substring(7));
+		console.log(qObj);
+		if(qObj.pageNum == undefined){
+			target=1;
+		} else {
+			target = qObj.pageNum;
+		}
 	} else{
-		pageNum = req.body.pageNum;
+		target=1;
 	}
+	pageNum = target;
 	async.waterfall([function(callback){
 		anonyDAO.foundTotalNum(callback);
 	} , function(args1, callback){
@@ -99,19 +111,41 @@ router.get('/anony', function(req, res ){
 					}
 				}
 			}//각 게시물에서 리플갯수 더하는거
+			for(var i = 0 ; i < boardInfo.length ; i++){
+				var d = new Date(boardInfo[i].written_time);
+				var temp;
+				if(d.getMonth()<9){
+					temp = "0"+(d.getMonth()+1);
+				} else {
+					temp = "" + (d.getMonth()+1);
+				}
+				boardInfo[i].written_time = d.getFullYear()+"-"+temp+"-"+d.getDate();
+			}
 		res.render('board_anony' , {board : boardInfo , totalNum : totalNum , pageNum : pageNum});
 		}
 	});
 });
 
 router.get('/anony/click' , function(req , res){
+	var target;
+	if(req.url.length > 12){
+		var qObj = querystring.parse(req.url.substring(13));
+		console.log(qObj);
+		if(qObj.anid == undefined){
+			res.redirect('/board/anony');
+		} else {
+			target = qObj.anid;
+		}
+	} else{
+		res.redirect('/board/anony');
+	}
 	var pageNum;					//보드 페이지번호 파라미터로 넘겨줘야함 없을시 첫번째 페이지 보이게 무조건 해놓음 파라미터 이름은 pageNum
 	var totalNum;
 	var countPage = 5;
 	var boardInfo;
 	var targetBoardReply;
 	var targetBoardInfo;
-	var bidNum = 2; //req.body.bidNum;
+	var bidNum = target; 
 	if(req.body.pageNum==undefined){
 		pageNum = 1;
 	} else{
@@ -128,6 +162,8 @@ router.get('/anony/click' , function(req , res){
 		anonyDAO.findAnonyReplyByAnid(bidNum , callback);
 	}, function(args1 ,callback){
 		targetBoardReply = args1;
+		anonyDAO.addViewNum(bidNum , callback);
+	},function(args1 , callback){
 		anonyDAO.foundTotalNum(callback);
 	} , function(args1, callback){
 		var countTop;        //맨마지막장일때 보여줄 갯수 제한
@@ -143,7 +179,7 @@ router.get('/anony/click' , function(req , res){
 		anonyDAO.getAnonyReplyNum(boardInfo , callback);
 	}] , function(err , result){
 		if(err){
-			res.render('board_anony_click' , {board : undefined , totalNum : 'noBoard'});
+			res.redirect('/board/anony')
 		} else{
 			for(var i = 0 ; i < boardInfo.length ; i++){
 				boardInfo[i].reply_num = 0;
@@ -153,10 +189,60 @@ router.get('/anony/click' , function(req , res){
 					}
 				}
 			}//각 게시물에서 리플갯수 더하는거
-		res.render('board_anony_click' , {board : boardInfo , totalNum : totalNum , pageNum : pageNum , targetBoardReply : targetBoardReply , targetBoardInfo : targetBoardInfo[0]}); //여기부터 하고가면될듯
+			
+			for(var i = 0 ; i < targetBoardReply.length ; i++){
+				var d = new Date(targetBoardReply[i].written_time);
+				var temp;
+				if(d.getMonth()<9){
+					temp = "0"+(d.getMonth()+1);
+				} else {
+					temp = "" + (d.getMonth()+1);
+				}
+				targetBoardReply[i].written_time = d.getFullYear()+"-"+temp+"-"+d.getDate();
+			}
+			
+			var d = new Date(targetBoardInfo[0].written_time);
+			var temp;
+			if(d.getMonth()<9){
+				temp = "0"+(d.getMonth()+1);
+			} else {
+				temp = "" + (d.getMonth()+1);
+			}
+			targetBoardInfo[0].written_time = d.getFullYear()+"-"+temp+"-"+d.getDate();
+		res.render('board_anony_det' , {targetBoardReply : targetBoardReply , targetBoardInfo : targetBoardInfo[0]}); //여기부터 하고가면될듯
 		}
 	});
 });
+
+router.get('/anony/make' , function(req , res){
+	res.render('board_anony_make' , {});
+});
+
+router.get('/notice/make' , function(req , res){
+	if(req.session.passport.user.uid==clubMan){
+		res.render('board_notice_make' , {});
+	} else{
+		res.redirect('/board/notice');
+	}
+});
+
+router.post('/notice/register' , function(req , res){
+	async.waterfall([function(callback){
+		var inform = {
+				title : req.body.title,
+				content : req.body.content,
+				writer : req.session.passport.user.uid
+		}
+		noticeDAO.register(inform , callback);
+	}] , function(err , result){
+		if(err){
+			res.send('작성완료 안됨 내부오류');
+		}else{
+			res.redirect('/board/notice');
+		}
+	});
+});
+
 
 router.get('/anony/search', function(req, res){
 	var pageNum;					//보드 페이지번호 파라미터로 넘겨줘야함 없을시 첫번째 페이지 보이게 무조건 해놓음 파라미터 이름은 pageNum
@@ -207,15 +293,15 @@ router.get('/anony/search', function(req, res){
 					}
 				}
 			}//각 게시물에서 리플갯수 더하는거
-		res.render('board_anony_search' , {board : boardInfo , totalNum : totalNum , search : search , whSearch : whSearch, pageNum : pageNum}); //search랑 whSearch 넘기는 이유는 Paging 버튼 눌러도 클라에서 바로바로 요청할수있게 할라고..
+		res.render('board_anony' , {board : boardInfo , totalNum : totalNum , search : search , whSearch : whSearch, pageNum : pageNum}); //search랑 whSearch 넘기는 이유는 Paging 버튼 눌러도 클라에서 바로바로 요청할수있게 할라고..
 		}
 	});
 });
 
-router.get('/anony/register' , function(req , res){
+router.post('/anony/register' , function(req , res){
 	var inform = {
-			title : "아니 슈발",//req.body.title;
-			content : "내가 이렇게 공부했으면 전교 1등을 했을텐데", //req.body.content;
+			title : req.body.title,
+			content : req.body.content,
 			writer : req.session.passport.user.uid
 	}
 	async.waterfall([function(callback){
@@ -224,7 +310,7 @@ router.get('/anony/register' , function(req , res){
 		if(err){
 			res.send('작성완료 안됨 내부오류');
 		}else{
-			res.send('작성완료');
+			res.redirect('/board/anony');
 		}
 	});
 });
@@ -259,19 +345,19 @@ router.get('/anony/delete' , function(req , res){
 	});
 });
 
-router.get('/anony/reply' , function(req , res){
-	var inform = {
-			anid : 3, //req.body.bid
-			writer : 1, //req.body.replyWriter
-			content : "ㅇㅋㅇㅋ?" //req.body.replyContent
-	}
+router.post('/anony/reply' , function(req , res){
 	async.waterfall([function(callback){
+		var inform = {
+				anid : req.body.bid, //req.body.bid
+				writer : req.session.passport.user.uid,
+				content : req.body.replyContent //req.body.replyContent
+		}
 		anonyDAO.addReply(inform  , callback);
 	}] , function(err ,result){
 		if(err){
 			res.send('익게 댓글 내부오류');
 		} else{
-			res.send('익게 댓글 달림 ');
+			res.redirect('/board/anony/click?anid='+req.body.bid);
 		}
 	});
 });
@@ -300,11 +386,18 @@ router.get('/free', function(req, res){
 	var totalNum;
 	var countPage = 5;
 	var boardInfo;
-	if(req.body.pageNum==undefined){
-		pageNum = 1;
+	if(req.url.length > 5){
+		var qObj = querystring.parse(req.url.substring(6));
+		console.log(qObj);
+		if(qObj.pageNum == undefined){
+			target=1;
+		} else {
+			target = qObj.pageNum;
+		}
 	} else{
-		pageNum = req.body.pageNum;
+		target=1;
 	}
+	pageNum = target;
 	async.waterfall([function(callback){
 		boardDAO.foundTotalNum(callback);
 	} , function(args1, callback){
@@ -345,19 +438,41 @@ router.get('/free', function(req, res){
 					}
 				}
 			}//각 게시물에서 리플갯수 더하는거
+			for(var i = 0 ; i < boardInfo.length ; i++){
+				var d = new Date(boardInfo[i].written_time);
+				var temp;
+				if(d.getMonth()<9){
+					temp = "0"+(d.getMonth()+1);
+				} else {
+					temp = "" + (d.getMonth()+1);
+				}
+				boardInfo[i].written_time = d.getFullYear()+"-"+temp+"-"+d.getDate();
+			}
 		res.render('board_free' , {board : boardInfo , totalNum : totalNum , pageNum : pageNum});
 		}
 	});
 });
 
 router.get('/free/click' , function(req,res){ // 보드에서 클릭했을때 함수
+	var target;
+	if(req.url.length > 11){
+		var qObj = querystring.parse(req.url.substring(12));
+		console.log(qObj);
+		if(qObj.bid == undefined){
+			res.redirect('/board/free');
+		} else {
+			target = qObj.bid;
+		}
+	} else{
+		res.redirect('/board/free');
+	}
 	var pageNum;					//보드 페이지번호 파라미터로 넘겨줘야함 없을시 첫번째 페이지 보이게 무조건 해놓음 파라미터 이름은 pageNum
 	var totalNum;
 	var countPage = 5;
 	var boardInfo;
 	var targetBoardReply;
 	var targetBoardInfo;
-	var bidNum = 2; //req.body.bidNum;
+	var bidNum = target; //req.body.bidNum;
 	if(req.body.pageNum==undefined){
 		pageNum = 1;
 	} else{
@@ -372,8 +487,10 @@ router.get('/free/click' , function(req,res){ // 보드에서 클릭했을때 �
 	} ,function(args1 , callback){
 		targetBoardInfo = args1;
 		boardDAO.findBoardReplyByBid(bidNum , callback);
-	}, function(args1 ,callback){
+	}, function(args1 , callback){
 		targetBoardReply = args1;
+		boardDAO.addViewNum(bidNum , callback);
+	}, function(args1 ,callback){
 		if(targetBoardReply.length == 0){
 			callback(null , null);
 		} else{
@@ -414,20 +531,39 @@ router.get('/free/click' , function(req,res){ // 보드에서 클릭했을때 �
 				}
 			}
 		}
+		for(var i = 0 ; i <args1.length ; i++){
+			if(targetBoardInfo[0].writer == args1[i].uid){
+				targetBoardInfo[0].writerName=args1[i].name;
+			}
+		}
 		boardDAO.getReplyNum(boardInfo , callback);
 	}] , function(err , result){
 		if(err){
-			res.render('board_free_click' , {board : undefined , totalNum : 'noBoard'});
+			res.render('board_free_det' , {board : undefined , totalNum : 'noBoard'});
 		} else{
-			for(var i = 0 ; i < boardInfo.length ; i++){
-				boardInfo[i].reply_num = 0;
-				for(var j = 0; j < result.length ; j++){
-					if(boardInfo[i].bid == result[j].bid){
-						++boardInfo[i].reply_num;
-					}
+			for(var i = 0 ; i < targetBoardReply.length ; i++){
+				var d = new Date(targetBoardReply[i].written_time);
+				var temp;
+				if(d.getMonth()<9){
+					temp = "0"+(d.getMonth()+1);
+				} else {
+					temp = "" + (d.getMonth()+1);
 				}
-			}//각 게시물에서 리플갯수 더하는거
-		res.render('board_free_click' , {board : boardInfo , totalNum : totalNum , pageNum : pageNum , targetBoardReply : targetBoardReply , targetBoardInfo : targetBoardInfo[0]}); //여기부터 하고가면될듯
+				targetBoardReply[i].written_time = d.getFullYear()+"-"+temp+"-"+d.getDate();
+			}
+			
+			var d = new Date(targetBoardInfo[0].written_time);
+			var temp;
+			if(d.getMonth()<9){
+				temp = "0"+(d.getMonth()+1);
+			} else {
+				temp = "" + (d.getMonth()+1);
+			}
+			targetBoardInfo[0].written_time = d.getFullYear()+"-"+temp+"-"+d.getDate();
+			console.log(targetBoardReply);
+			console.log(targetBoardInfo[0]);
+			//각 게시물에서 리플갯수 더하는거
+		res.render('board_free_det' , { targetBoardReply : targetBoardReply , targetBoardInfo : targetBoardInfo[0]}); //여기부터 하고가면될듯
 		}
 	});
 });
@@ -739,25 +875,28 @@ router.get('/free/myreply/search', function(req, res){
 
 //위에껀 하자고하면 고치자 슈발
 
-router.get('/free/register', function(req , res){
-	var inform = {
-			title : "아니 슈발",//req.body.title;
-			content : "내가 이렇게 공부했으면 전교 1등을 했을텐데", //req.body.content;
-			writer : req.session.passport.user.uid
-	}
+router.post('/free/register', function(req , res){
 	async.waterfall([function(callback){
+		var inform = {
+				title : req.body.title,//req.body.title;
+				content : req.body.content, //req.body.content;
+				writer : req.session.passport.user.uid
+		}
 		boardDAO.register(inform , callback);
 	}] , function(err , result){
 		if(err){
 			res.send('자게 작성완료 안됨 내부오류');
 		}else{
-			res.send('자게 작성완료');
+			res.redirect('/board/free');
 		}
 	});
 });
 
+router.get('/free/make', function(req , res){
+	res.render('board_free_make' , {});
+});
+
 router.get('/free/revise' , function(req , res){
-	
 	var inform = {
 			title : "아니 슈발",//req.body.title;
 			content : "내가 이렇게 공부했으면 전교 1등을 했을텐데", //req.body.content;
@@ -787,19 +926,19 @@ router.get('/free/delete' , function(req , res){
 	});
 });
 
-router.get('/free/reply' , function(req , res){
-	var inform = {
-			bid : 3, //req.body.bid
-			writer : 1, //req.body.replyWriter
-			content : "ㅇㅋㅇㅋ?" //req.body.replyContent
-	}
+router.post('/free/reply' , function(req , res){
 	async.waterfall([function(callback){
+		var inform = {
+				bid : req.body.bid, //req.body.bid
+				writer : req.session.passport.user.uid, //req.body.replyWriter
+				content : req.body.replyContent //req.body.replyContent
+		}
 		boardDAO.addReply(inform  , callback);
 	}] , function(err ,result){
 		if(err){
 			res.send('자게 댓글 내부오류');
 		} else{
-			res.send('자게글 댓글 달림 ');
+			res.redirect('/board/free/click?bid='+req.body.bid);
 		}
 	});
 });
@@ -817,8 +956,5 @@ router.get('/free/deletereply' , function(req , res){
 	});
 });
 
-router.get('/notice', function(req, res ){
-	res.render('board_notice' , {});
-});
 
 module.exports = router;

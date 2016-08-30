@@ -121,3 +121,8 @@ exports.deleteReply = function(qrid , callback){
 	var sqlQuery = 'DELETE FROM qna_reply WHERE qrid = ' + mysql.escape(qrid);
 	base.deletion(sqlQuery , callback);
 }
+
+exports.addViewNum = function(qid , callback){
+	var sqlQuery = 'UPDATE qna SET view_num = view_num + 1 WHERE qid = ' + mysql.escape(qid);
+	base.update(sqlQuery , callback);
+}

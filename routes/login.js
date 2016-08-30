@@ -2,9 +2,9 @@ var express = require('express');
 var router = express.Router();
 var passport = require('../web').passport;
 
-router.post('/', passport.authenticate('local', { failureRedirect: '/fail',
-												  failureFlash : true}),
+router.post('/', passport.authenticate('local', { failureRedirect: '/fail' }),
 			  function(req, res) {
+				console.log(req.session);
 			    res.redirect('/');
 	});
 

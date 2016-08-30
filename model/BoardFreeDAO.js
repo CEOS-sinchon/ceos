@@ -137,3 +137,8 @@ exports.deleteReply = function(rid , callback){
 	var sqlQuery = 'DELETE FROM reply WHERE rid = ' + mysql.escape(rid);
 	base.deletion(sqlQuery , callback);
 }
+
+exports.addViewNum = function(bid , callback){
+	var sqlQuery = 'UPDATE board SET view_num = view_num + 1 WHERE bid = ' + mysql.escape(bid);
+	base.update(sqlQuery , callback);
+}

@@ -31,3 +31,13 @@ exports.findWriter = function(boardArr , callback){
 	sqlQuery = sqlQuery.substring(0 , sqlQuery.length -4);
 	base.select(sqlQuery , callback);
 }
+
+exports.findUserTempList = function(order , callback){
+	var sqlQuery = 'SELECT * from temp';
+	if(order == 0){
+		
+	} else {
+		sqlQuery = sqlQuery + ' WHERE CEOSorder = ' + mysql.escape(order);
+	}
+	base.select(sqlQuery , callback);
+}

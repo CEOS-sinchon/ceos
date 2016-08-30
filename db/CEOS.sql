@@ -23,21 +23,35 @@ create table user
          field tinyint unsigned default 3 CHECK(field = 0 or 1 or 2 or 3),/** 0은 기획 1은 개발 2는 디자인 3은 기본**/
          interest VARCHAR(255) default NULL,
          speciality VARCHAR(255) default NULL,
+         mention VARCHAR(255),
          career_0 VARCHAR(255) default NULL,
          career_1 VARCHAR(255) default NULL,
          career_2 VARCHAR(255) default NULL,
          career_3 VARCHAR(255) default NULL,
          verify_code VARCHAR(50) default NULL,
+         CEOSorder tinyint default NULL,
          profile_image VARCHAR(255) default NULL,
          primary key(uid),
          unique(id)
+) Engine =InnoDB DEFAULT CHARSET = utf8;
+
+DROP TABLE IF exists temp;
+create table temp (
+	name VARCHAR(5) NOT NULL,
+    univ VARCHAR(30) NOT NULL,
+    major VARCHAR(30) NOT NULL,
+    univ_id VARCHAR(30) NOT NULL,
+    field tinyint unsigned default 3 CHECK(field = 0 or 1 or 2 or 3),/** 0은 기획 1은 개발 2는 디자인 3은 기본**/
+    profile_image VARCHAR(255) default NULL,
+    CEOSorder tinyint default NULL,
+    mention VARCHAR(255)
 ) Engine =InnoDB DEFAULT CHARSET = utf8;
 
 DROP TABLE IF exists qna;
 create table qna(
 	qid int unsigned NOT NULL AUTO_INCREMENT,
 	title VARCHAR(100) NOT NULL,
-    writer smallint unsigned,
+    writer smallint unsigned default 0,
     content text NOT NULL,
     written_time datetime,
     view_num tinyint unsigned default 0,
@@ -54,12 +68,11 @@ DROP TABLE IF exists qna_reply;
 create table qna_reply (
 	qrid int unsigned NOT NULL AUTO_INCREMENT,
     qid int unsigned NOT NULL,
-    writer smallint unsigned,
+    writer smallint unsigned default 0,
     content VARCHAR(255) NOT NULL,
     written_time datetime ,
     primary key(qrid , qid),
-    foreign key(qid) references qna(qid) ON DELETE CASCADE ON UPDATE CASCADE,
-    foreign key(writer) references user(uid) ON DELETE SET NULL ON UPDATE CASCADE
+    foreign key(qid) references qna(qid) ON DELETE CASCADE ON UPDATE CASCADE
 ) Engine = InnoDB DEFAULT CHARSET = utf8;
 
 CREATE

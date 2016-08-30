@@ -81,3 +81,8 @@ exports.deleteReply = function(anrid , callback){
 	var sqlQuery = 'DELETE FROM anony_reply WHERE anrid = ' + mysql.escape(anrid);
 	base.deletion(sqlQuery , callback);
 }
+
+exports.addViewNum = function(anid , callback){
+	var sqlQuery = 'UPDATE anony SET view_num = view_num + 1 WHERE anid = ' + mysql.escape(anid);
+	base.update(sqlQuery , callback);
+}
